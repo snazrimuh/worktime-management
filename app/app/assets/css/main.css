@@ -1,0 +1,246 @@
+@import 'tailwindcss';
+
+/* Class-based dark mode for Tailwind v4 */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+
+  /*  Core Slate-Blue Brand Palette (Modern & Professional) */
+  --color-primary-50:  hsl(215, 60%, 97%);
+  --color-primary-100: hsl(215, 60%, 94%);
+  --color-primary-200: hsl(215, 60%, 88%);
+  --color-primary-300: hsl(215, 50%, 75%);
+  --color-primary-400: hsl(215, 45%, 60%);
+  --color-primary-500: hsl(215, 50%, 45%);   /* Principal Brand Color */
+  --color-primary-600: hsl(215, 50%, 40%);
+  --color-primary-700: hsl(215, 50%, 30%);
+  --color-primary-800: hsl(215, 50%, 20%);
+  --color-primary-900: hsl(215, 60%, 12%);
+  --color-primary-950: hsl(215, 70%, 8%);
+
+  /* Keep legacy indigo classes palette-aligned */
+  --color-indigo-50:  #eef1f4;
+  --color-indigo-100: #dde3eb;
+  --color-indigo-200: #c4cedc;
+  --color-indigo-300: #9caec3;
+  --color-indigo-400: #778da9;
+  --color-indigo-500: #415a77;
+  --color-indigo-600: #31465f;
+  --color-indigo-700: #1b263b;
+
+  /* ── Refined Semantic Status Colors (Muted & Harmonious) ───────── */
+  --color-status-green:  hsl(142, 70%, 45%);   /* Emerald/Teal-ish mute */
+  --color-status-blue:   hsl(217, 85%, 55%);   /* Sky/Blue-ish mute */
+  --color-status-amber:  hsl(38, 90%, 50%);    /* Amber/Orange-ish mute */
+  --color-status-red:    hsl(0, 80%, 55%);      /* Rose/Red-ish mute */
+
+  /* Muted semantic scale for Background Tints */
+  --color-emerald-50:  rgba(16, 185, 129, 0.05);
+  --color-emerald-500: hsl(142, 65%, 45%);
+  --color-emerald-600: hsl(142, 70%, 40%);
+
+  --color-amber-50:  rgba(245, 158, 11, 0.05);
+  --color-amber-500: hsl(38, 85%, 50%);
+  --color-amber-600: hsl(38, 90%, 45%);
+
+  --color-rose-50:  rgba(244, 63, 94, 0.05);
+  --color-rose-500: hsl(0, 75%, 55%);
+  --color-rose-600: hsl(0, 80%, 50%);
+
+  --color-sky-500: hsl(217, 85%, 55%);
+  --color-sky-600: hsl(217, 90%, 50%);
+
+  /* Surface color scale */
+  --color-surface-50:  #f8fafc;
+  --color-surface-100: #f1f5f9;
+  --color-surface-200: #e2e8f0;
+  --color-surface-800: #0f1523;
+  --color-surface-850: #080c15;
+  --color-surface-900: #04070d;
+  --color-surface-950: #020305;
+
+  /* Design palette – dark mode solid backgrounds */
+  --color-dp-bg:     #0E0D25;
+  --color-dp-base:   #19183B;
+  --color-dp-card:   #1E1D3E;
+  --color-dp-subtle: #1B1A38;
+  --color-dp-bar:    #161530;
+  --color-dp-teal:   #1C3441;
+  --color-dp-amber:  #213E4A;
+  --color-dp-green:  #1B3935;
+  --color-dp-slate:  #708993;
+  --color-dp-mint:   #A1C2BD;
+  --color-dp-light:  #E7F2EF;
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Background ─────────────────────────────────────── */
+
+.app-bg {
+  background:
+    radial-gradient(ellipse at 12% 20%, rgba(147, 197, 253, 0.20) 0%, transparent 58%),
+    linear-gradient(135deg, #f1f5f9 0%, #dbeafe 55%, #c7d2fe 100%);
+  min-height: 100vh;
+}
+
+.dark .app-bg {
+  background:
+    radial-gradient(ellipse at 15% 15%, rgba(30, 58, 138, 0.12) 0%, transparent 60%),
+    linear-gradient(180deg, #04070d 0%, #020305 100%);
+}
+
+/* ── Glass utilities ────────────────────────────────── */
+
+.glass {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.01)),
+    rgba(255,255,255,0.45);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255,255,255,0.35);
+}
+.dark .glass {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.03), rgba(0,0,0,0.12)),
+    rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+.glass-subtle {
+  background: rgba(255,255,255,0.30);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.20);
+}
+.dark .glass-subtle {
+  background: rgba(255,255,255,0.035);
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+.glass-bar {
+  background: rgba(255,255,255,0.50);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-bottom: 1px solid rgba(255,255,255,0.30);
+}
+.dark .glass-bar {
+  background: rgba(255,255,255,0.05);
+  border-bottom: 1px solid rgba(255,255,255,0.09);
+}
+
+/* ── Card hover lift & depth ───────────────────────── */
+
+.card-hover {
+  transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 200ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.card-hover:hover {
+  transform: translateY(-2px);
+}
+
+/* ── Contextual accent borders ─────────────────────── */
+
+.accent-maintenance {
+  border-left: 3px solid rgba(245, 158, 11, 0.55);
+}
+.dark .accent-maintenance {
+  border-left: 3px solid rgba(245, 158, 11, 0.40);
+}
+
+.accent-incident {
+  border-left: 3px solid rgba(239, 68, 68, 0.55);
+}
+.dark .accent-incident {
+  border-left: 3px solid rgba(239, 68, 68, 0.40);
+}
+
+.accent-kpi {
+  border-left: 3px solid rgba(59, 130, 246, 0.45);
+}
+.dark .accent-kpi {
+  border-left: 3px solid rgba(59, 130, 246, 0.35);
+}
+
+/* ── Alert section tinted backgrounds ──────────────── */
+
+.tint-maintenance {
+  background: rgba(245, 158, 11, 0.04);
+}
+.dark .tint-maintenance {
+  background: rgba(245, 158, 11, 0.05);
+}
+
+.tint-incident {
+  background: rgba(239, 68, 68, 0.04);
+}
+.dark .tint-incident {
+  background: rgba(239, 68, 68, 0.05);
+}
+
+/* ── Status progress bar colors ────────────────────── */
+
+.bar-available  { background: #22C55E; }
+.bar-inuse      { background: #3B82F6; }
+.bar-maintenance { background: #F59E0B; }
+.bar-retired    { background: #64748b; }
+.bar-disposed   { background: #94a3b8; }
+.bar-lost       { background: #EF4444; }
+
+/* ── Transitions ────────────────────────────────────── */
+
+*, *::before, *::after {
+  transition-property: background-color, border-color, color, box-shadow, backdrop-filter;
+  transition-duration: 150ms;
+  transition-timing-function: ease;
+}
+
+/* ── Scrollbar ──────────────────────────────────────── */
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.20); }
+.dark ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); }
+.dark ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.14); }
+
+/* ── Select dropdown dark mode fix ─────────────────── */
+
+.select-styled {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1rem;
+}
+
+.select-styled option {
+  background: #ffffff;
+  color: #1e293b;
+  padding: 8px 12px;
+}
+
+.dark .select-styled {
+  color-scheme: dark;
+}
+.dark .select-styled option {
+  background: #1E293B;
+  color: #e2e8f0;
+}
+
+/* ── Input dark mode (date picker, color picker) ───── */
+
+.dark input[type="date"],
+.dark input[type="time"],
+.dark input[type="datetime-local"],
+.dark input[type="color"] {
+  color-scheme: dark;
+}
+

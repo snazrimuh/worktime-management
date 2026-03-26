@@ -1,0 +1,173 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  EMPLOYEE
+}
+
+model User {
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  password      String
+  avatar        String?
+  role          UserRole @default(EMPLOYEE)
+  isSystemAdmin Boolean  @default(false)
+  department    String?
+  refreshToken  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  assignments    ScheduleAssignment[]
+  attendance     Attendance[]
+  requests       Request[]            @relation("Requester")
+  approvals      Request[]            @relation("Approver")
+  swapRequests   Request[]            @relation("SwapTarget")
+  notifications  Notification[]
+  auditLogs      AuditLog[]
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  type      String   @default("INFO") // INFO, SUCCESS, WARNING, DANGER
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  action    String
+  entity    String   // Schedule, Attendance, etc.
+  entityId  String
+  oldData   Json?
+  newData   Json?
+  createdAt DateTime @default(now())
+
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+}
+
+enum ScheduleType {
+  FIXED
+  FLEXI
+  SHIFT
+}
+
+model Schedule {
+  id                 String       @id @default(cuid())
+  name               String
+  type               ScheduleType @default(FIXED)
+  startTime          String?      // HH:mm
+  endTime            String?      // HH:mm
+  minHours           Float?       // For FLEXI
+  gracePeriodMinutes Int          @default(15)
+  isActive           Boolean      @default(true)
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  assignments        ScheduleAssignment[]
+  attendance         Attendance[]
+}
+
+model ScheduleAssignment {
+  id            String    @id @default(cuid())
+  userId        String
+  scheduleId    String
+  effectiveFrom DateTime
+  effectiveTo   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  schedule      Schedule  @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([scheduleId])
+}
+
+enum AttendanceStatus {
+  ON_TIME
+  LATE
+  EARLY_LEAVE
+  ABSENT
+  OVERTIME
+}
+
+model Attendance {
+  id             String           @id @default(cuid())
+  userId         String
+  scheduleId     String
+  date           DateTime         @db.Date
+  checkIn        DateTime?
+  checkOut       DateTime?
+  status         AttendanceStatus @default(ON_TIME)
+  durationMinutes Int?
+  notes          String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  schedule       Schedule         @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@index([userId])
+  @@index([date])
+}
+
+enum RequestType {
+  CHANGE    // Schedule change
+  SWAP      // Shift swap
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+model Request {
+  id            String        @id @default(cuid())
+  type          RequestType
+  status        RequestStatus @default(PENDING)
+  requesterId   String
+  approverId    String?
+  targetUserId  String?       // For SWAP
+  targetDate    DateTime?
+  reason        String?
+  details       Json?         // Stores metadata like target schedule ID
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  requester     User          @relation("Requester", fields: [requesterId], references: [id], onDelete: Cascade)
+  approver      User?         @relation("Approver", fields: [approverId], references: [id])
+  targetUser    User?         @relation("SwapTarget", fields: [targetUserId], references: [id])
+
+  @@index([requesterId])
+  @@index([targetUserId])
+}
+
+model SystemConfig {
+  id                 String   @id @default("global")
+  gracePeriodMinutes Int      @default(15)
+  noShowThresholdMins Int     @default(60)
+  updatedAt          DateTime @updatedAt
+}
