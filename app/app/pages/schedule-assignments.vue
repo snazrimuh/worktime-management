@@ -131,7 +131,7 @@ import { ref, computed, onMounted } from 'vue'
 import { Search, CalendarDays, UserPlus2, Link2Off } from 'lucide-vue-next'
 import { useAuthStore } from '~/stores/auth'
 
-definePageMeta({ middleware: 'auth' })
+definePageMeta({ middleware: 'manager' })
 
 const api = useApi()
 const isLoading = ref(false)

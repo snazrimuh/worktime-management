@@ -6,7 +6,9 @@ export default defineNuxtRouteMiddleware(() => {
   if (import.meta.server) return
 
   const authStore = useAuthStore()
-  if (!authStore.isLoggedIn || !authStore.user?.isSystemAdmin) {
+  const isAdmin = authStore.user?.isSystemAdmin || authStore.user?.role === 'ADMIN'
+  
+  if (!authStore.isLoggedIn || !isAdmin) {
     return navigateTo('/dashboard')
   }
 })

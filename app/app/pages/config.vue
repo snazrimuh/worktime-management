@@ -91,7 +91,7 @@ import { ref, onMounted } from 'vue'
 import { Save, Timer as Timer2, Zap, CalendarHeart, Plus, X } from 'lucide-vue-next'
 import { useAuthStore } from '~/stores/auth'
 
-definePageMeta({ middleware: 'auth' })
+definePageMeta({ middleware: 'admin' })
 
 const api = useApi()
 const isSaving = ref(false)

@@ -72,7 +72,7 @@
                   <UiBadge variant="secondary" class="font-bold text-[10px]">{{ roleLabel(user.role) }}</UiBadge>
                 </td>
                 <td class="px-6 py-4 text-center">
-                  <UiBadge :variant="user.isSystemAdmin ? 'success' : 'outline'" class="font-bold text-[10px] min-w-[50px] justify-center">
+                  <UiBadge :variant="user.isSystemAdmin ? 'success' : 'secondary'" class="font-bold text-[10px] min-w-[50px] justify-center">
                     {{ user.isSystemAdmin ? 'Full Access' : 'Restricted' }}
                   </UiBadge>
                 </td>
@@ -133,7 +133,7 @@
 <script setup lang="ts">
 import { Pencil, UserMinus, UserPlus, Search } from 'lucide-vue-next'
 
-definePageMeta({ middleware: 'auth' })
+definePageMeta({ middleware: 'admin' })
 
 type UserRole = 'ADMIN' | 'MANAGER' | 'EMPLOYEE'
 

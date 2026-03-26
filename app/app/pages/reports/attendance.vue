@@ -118,7 +118,7 @@
 <script setup lang="ts">
 import { Download, Search, FileSpreadsheet } from 'lucide-vue-next'
 
-definePageMeta({ middleware: 'auth' })
+definePageMeta({ middleware: 'manager' })
 
 const api = useApi()
 const isLoading = ref(false)

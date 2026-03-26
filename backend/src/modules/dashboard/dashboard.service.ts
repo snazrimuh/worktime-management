@@ -92,4 +92,58 @@ export class DashboardService {
       })),
     };
   }
+
+  async getPersonalSummary(userId: string) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Get personal record
+    const attendanceRecord = await this.prisma.attendance.findUnique({
+      where: { userId_date: { userId, date: today } },
+      include: { schedule: true },
+    });
+
+    // Get active assignment
+    const currentAssignment = await this.prisma.scheduleAssignment.findFirst({
+      where: {
+        userId,
+        effectiveFrom: { lte: today },
+        OR: [{ effectiveTo: null }, { effectiveTo: { gte: today } }],
+      },
+      include: { schedule: true },
+    });
+
+    // My recent requests
+    const recentRequests = await this.prisma.request.findMany({
+      where: { requesterId: userId },
+      orderBy: { createdAt: 'desc' },
+      take: 5,
+    });
+
+    // Stats for the month
+    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const monthlyAttendance = await this.prisma.attendance.findMany({
+      where: { userId, date: { gte: startOfMonth, lte: today } },
+    });
+
+    const presentThisMonth = monthlyAttendance.filter(r => r.checkIn).length;
+    const lateThisMonth = monthlyAttendance.filter(r => r.status === 'LATE').length;
+
+    return {
+      personal: true,
+      hasRecord: !!attendanceRecord,
+      checkIn: attendanceRecord?.checkIn || null,
+      checkOut: attendanceRecord?.checkOut || null,
+      status: attendanceRecord?.status || 'NOT_CHECKED_IN',
+      schedule: currentAssignment?.schedule || null,
+      presentThisMonth,
+      lateThisMonth,
+      recentRequests: recentRequests.map(r => ({
+        id: r.id,
+        type: r.type,
+        status: r.status,
+        date: r.targetDate ? r.targetDate.toISOString() : null,
+      })),
+    };
+  }
 }

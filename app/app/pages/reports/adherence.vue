@@ -111,7 +111,7 @@
 <script setup lang="ts">
 import { TrendingUp, Search } from 'lucide-vue-next'
 
-definePageMeta({ middleware: 'auth' })
+definePageMeta({ middleware: 'manager' })
 
 const api = useApi()
 const isLoading = ref(false)

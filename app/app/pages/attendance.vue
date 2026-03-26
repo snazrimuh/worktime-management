@@ -163,7 +163,7 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { SlidersHorizontal, LogIn, LogOut, Clock4, Search } from 'lucide-vue-next'
 import { useAuthStore } from '~/stores/auth'
 
-definePageMeta({ middleware: 'auth' })
+definePageMeta({ middleware: 'manager' })
 
 const api = useApi()
 const isLoading = ref(false)

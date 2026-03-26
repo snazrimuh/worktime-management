@@ -144,7 +144,7 @@ import { ref, computed, onMounted } from 'vue'
 import { Pencil, Trash2, Plus, Search, Clock, Inbox, UserMinus, UserPlus } from 'lucide-vue-next'
 import { useAuthStore } from '~/stores/auth'
 
-definePageMeta({ middleware: 'auth' })
+definePageMeta({ middleware: 'manager' })
 
 const api = useApi()
 const isLoading = ref(false)

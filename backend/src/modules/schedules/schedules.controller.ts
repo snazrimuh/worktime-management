@@ -33,22 +33,22 @@ export class SchedulesController {
     return this.schedulesService.findAll();
   }
 
-  @Get(':id')
-  @Roles('ADMIN', 'MANAGER')
-  findOne(@Param('id') id: string) {
-    return this.schedulesService.findOne(id);
-  }
-
   @Get('my/today')
   @Roles('ADMIN', 'MANAGER', 'EMPLOYEE')
   async getMyToday(@Req() req: any) {
-    return this.schedulesService.findTodayForUser(req.user.sub);
+    return this.schedulesService.findTodayForUser(req.user.sub || req.user.id);
   }
 
   @Get('my/active')
   @Roles('ADMIN', 'MANAGER', 'EMPLOYEE')
   async getMyActive(@Req() req: any) {
-    return this.schedulesService.findTodayForUser(req.user.sub);
+    return this.schedulesService.findTodayForUser(req.user.sub || req.user.id);
+  }
+
+  @Get(':id')
+  @Roles('ADMIN', 'MANAGER')
+  findOne(@Param('id') id: string) {
+    return this.schedulesService.findOne(id);
   }
 
   @Patch(':id')
