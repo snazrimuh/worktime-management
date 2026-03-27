@@ -45,11 +45,11 @@
             </NuxtLink>
 
             <button
-              class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-rose-600 dark:text-rose-300 hover:bg-rose-50/90 dark:hover:bg-rose-500/10 transition-colors"
-              @click="handleLogout"
+              class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-sky-700 dark:text-sky-300 hover:bg-sky-50/90 dark:hover:bg-sky-500/10 transition-colors"
+              @click="handleBackToPortal"
             >
               <LogOut class="h-4.5 w-4.5" />
-              <span>Logout</span>
+              <span>Kembali ke Portal</span>
             </button>
           </div>
         </Transition>
@@ -76,7 +76,7 @@ defineEmits<{
 }>()
 
 const authStore = useAuthStore()
-const router = useRouter()
+const runtime = useRuntimeConfig()
 
 const profileMenuRef = ref<HTMLElement | null>(null)
 const isProfileMenuOpen = ref(false)
@@ -98,10 +98,9 @@ const handleClickOutside = (event: MouseEvent) => {
   }
 }
 
-const handleLogout = async () => {
+const handleBackToPortal = async () => {
   isProfileMenuOpen.value = false
-  await authStore.logout()
-  await router.push('/login')
+  await navigateTo(runtime.public.hubUrl, { external: true })
 }
 
 onMounted(() => {

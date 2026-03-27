@@ -99,15 +99,15 @@
         </UiCardContent>
       </UiCard>
 
-      <!-- Logout Section -->
-      <UiCard class="lg:col-span-3 border-red-200/60 dark:border-red-500/15">
+      <!-- Back to Portal Section -->
+      <UiCard class="lg:col-span-3 border-sky-200/60 dark:border-sky-500/15">
         <UiCardHeader>
-          <UiCardTitle class="text-red-600 dark:text-red-400">Logout</UiCardTitle>
+          <UiCardTitle class="text-sky-600 dark:text-sky-400">Kembali ke Portal</UiCardTitle>
         </UiCardHeader>
         <UiCardContent>
-          <p class="text-sm text-slate-600 dark:text-slate-400 mb-4">Sign out of your account. You'll need to log in again to access Worktime.</p>
-          <UiButton variant="danger" :disabled="isLoggingOut" @click="handleLogout">
-            {{ isLoggingOut ? 'Logging out...' : 'Logout' }}
+          <p class="text-sm text-slate-600 dark:text-slate-400 mb-4">Kembali ke Portal Hub untuk berpindah aplikasi tanpa logout.</p>
+          <UiButton :disabled="isRedirecting" @click="handleBackToPortal">
+            {{ isRedirecting ? 'Membuka portal...' : 'Buka Portal Hub' }}
           </UiButton>
         </UiCardContent>
       </UiCard>
@@ -234,19 +234,12 @@ const handlePasswordChange = async () => {
   }
 }
 
-// ── Logout ────────────────────────────────────────────────────────────
-const isLoggingOut = ref(false)
+// ── Back to portal ─────────────────────────────────────────────────────
+const isRedirecting = ref(false)
+const runtime = useRuntimeConfig()
 
-const handleLogout = async () => {
-  isLoggingOut.value = true
-  try {
-    await api.post('/auth/logout')
-  } catch (err) {
-    // Continue logout even if API fails
-  } finally {
-    // Clear auth state
-    authStore.logout()
-    await navigateTo('/login')
-  }
+const handleBackToPortal = async () => {
+  isRedirecting.value = true
+  await navigateTo(runtime.public.hubUrl, { external: true })
 }
 </script>

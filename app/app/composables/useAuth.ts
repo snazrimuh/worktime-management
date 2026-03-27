@@ -17,7 +17,6 @@ export const useAuth = () => {
 
   const logout = async () => {
     await authStore.logout()
-    await navigateTo('/login')
   }
 
   const forgotPassword = async (email: string) => {

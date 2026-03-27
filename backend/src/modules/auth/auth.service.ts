@@ -36,6 +36,34 @@ export class AuthService {
     return this.sanitizeUser(user);
   }
 
+  async validateUserFromSSO(email: string, hubUserId: string, hubRole: string) {
+    let user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      this.logger.log(`Performing JIT Provisioning for email: ${email}`);
+
+      const defaultRole: AppRole = hubRole === 'ADMIN' ? 'ADMIN' : 'EMPLOYEE';
+
+      user = await this.prisma.user.create({
+        data: {
+          id: hubUserId,
+          email,
+          name: email.split('@')[0],
+          password: 'SSO_MANAGED_PASSWORD',
+          role: defaultRole,
+        } as any,
+      });
+    } else {
+      this.logger.log(
+        `SSO Login for existing user: ${email} (Local Role: ${user.role})`,
+      );
+    }
+
+    return this.sanitizeUser(user);
+  }
+
   async register(dto: RegisterDto) {
     const existing = await this.prisma.user.findUnique({ where: { email: dto.email } });
     if (existing) throw new ConflictException('Email already registered');

@@ -3,10 +3,10 @@ import { useAuthStore } from '~/stores/auth'
 type HttpMethod = 'GET' | 'POST' | 'PATCH' | 'DELETE' | 'PUT' | 'HEAD'
 
 /**
- * useApi — composable that wraps $fetch with:
- *   - automatic Bearer token injection from auth store
- *   - 401 → refresh token → retry once
- *   - if refresh fails, clears session and redirects to /login
+ * useApi — composable that wraps $fetch with cookie credentials:
+ *   - always sends credentials to backend
+ *   - retries once after /auth/refresh on 401
+ *   - redirects to Hub login when refresh fails
  */
 export function useApi() {
   const authStore = useAuthStore()
@@ -18,42 +18,35 @@ export function useApi() {
     body?: unknown,
     options?: Record<string, unknown>,
   ): Promise<T> {
-    const authHeader = (): Record<string, string> =>
-      authStore.accessToken
-        ? { Authorization: `Bearer ${authStore.accessToken}` }
-        : {}
-
     const fetchUrl = `${config.public.apiBase}${url}`
 
     try {
       return await $fetch<T>(fetchUrl, {
         method,
         body: body ?? undefined,
+        credentials: 'include',
         ...options,
-        headers: { ...authHeader(), ...((options?.headers as Record<string, string>) ?? {}) },
       })
     } catch (err: any) {
       if (err?.status === 401) {
-        if (authStore.refreshToken) {
-          try {
-            await authStore.refresh()
-            return await $fetch<T>(fetchUrl, {
-              method,
-              body: body ?? undefined,
-              ...options,
-              headers: {
-                Authorization: `Bearer ${authStore.accessToken}`,
-                ...((options?.headers as Record<string, string>) ?? {}),
-              },
-            })
-          } catch {
-            authStore.clear()
-            await navigateTo('/login')
-            throw err
-          }
-        } else {
+        try {
+          await $fetch(`${config.public.apiBase}/auth/refresh`, {
+            method: 'POST',
+            credentials: 'include',
+          })
+
+          return await $fetch<T>(fetchUrl, {
+            method,
+            body: body ?? undefined,
+            credentials: 'include',
+            ...options,
+          })
+        } catch {
           authStore.clear()
-          await navigateTo('/login')
+          const currentUrl = import.meta.client ? window.location.href : '/'
+          const redirect = encodeURIComponent(currentUrl)
+          await navigateTo(`${config.public.hubUrl}/login?redirect=${redirect}`, { external: true })
+          throw err
         }
       }
       throw err

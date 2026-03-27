@@ -5,9 +5,11 @@ import {
   HttpCode,
   HttpStatus,
   Post,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import type { Response } from 'express';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { LoginDto } from './dto/login.dto';
@@ -19,12 +21,25 @@ import { AuthService } from './auth.service';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  private cookieOptions(maxAge: number) {
+    return {
+      domain: process.env.COOKIE_DOMAIN || '.rizan.app',
+      path: process.env.COOKIE_PATH || '/',
+      httpOnly: true,
+      secure: process.env.COOKIE_SECURE === 'true',
+      sameSite: (process.env.COOKIE_SAME_SITE as 'lax' | 'strict' | 'none') || 'lax',
+      maxAge,
+    };
+  }
+
   @Get('me')
   @UseGuards(AuthGuard('jwt'))
   async me(@CurrentUser('id') userId: string) {
     return this.authService.getProfile(userId);
   }
 
+  // --- LOCAL AUTH DISABLED (Managed by Portal Hub) ---
+  /*
   @Post('register')
   async register(@Body() dto: RegisterDto) {
     return this.authService.register(dto);
@@ -32,15 +47,35 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  async login(@Body() dto: LoginDto) {
-    return this.authService.login(dto);
+  async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
+    const result = await this.authService.login(dto);
+
+    res.cookie('access_token', result.accessToken, this.cookieOptions(60 * 60 * 1000));
+    res.cookie('refresh_token', result.refreshToken, this.cookieOptions(7 * 24 * 60 * 60 * 1000));
+
+    return { user: result.user };
   }
+  */
 
   @Post('logout')
   @UseGuards(AuthGuard('jwt'))
   @HttpCode(HttpStatus.OK)
-  async logout(@CurrentUser('id') userId: string) {
+  async logout(
+    @CurrentUser('id') userId: string,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     await this.authService.logout(userId);
+
+    const clearOptions = {
+      domain: process.env.COOKIE_DOMAIN || '.rizan.app',
+      path: process.env.COOKIE_PATH || '/',
+      httpOnly: true,
+      secure: process.env.COOKIE_SECURE === 'true',
+      sameSite: (process.env.COOKIE_SAME_SITE as 'lax' | 'strict' | 'none') || 'lax',
+    };
+    res.clearCookie('access_token', clearOptions);
+    res.clearCookie('refresh_token', clearOptions);
+
     return { message: 'Logged out' };
   }
 
@@ -50,8 +85,14 @@ export class AuthController {
   async refresh(
     @CurrentUser('id') userId: string,
     @CurrentUser('refreshToken') refreshToken: string,
+    @Res({ passthrough: true }) res: Response,
   ) {
-    return this.authService.refreshTokens(userId, refreshToken);
+    const result = await this.authService.refreshTokens(userId, refreshToken);
+
+    res.cookie('access_token', result.accessToken, this.cookieOptions(60 * 60 * 1000));
+    res.cookie('refresh_token', result.refreshToken, this.cookieOptions(7 * 24 * 60 * 60 * 1000));
+
+    return { refreshed: true };
   }
 
   @Post('forgot-password')

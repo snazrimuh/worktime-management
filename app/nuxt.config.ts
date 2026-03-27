@@ -34,8 +34,9 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      apiBase: 'http://localhost:3001/api/v1',
-      socketUrl: 'http://localhost:3001',
+      apiBase: process.env.NUXT_PUBLIC_API_BASE || 'https://worktime-be.rizan.app/api/v1',
+      socketUrl: process.env.NUXT_PUBLIC_SOCKET_URL || 'https://worktime-be.rizan.app',
+      hubUrl: process.env.NUXT_PUBLIC_HUB_URL || 'https://unified-portal.rizan.app',
     },
   },
 })

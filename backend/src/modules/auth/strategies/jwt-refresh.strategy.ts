@@ -6,15 +6,20 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 interface JwtPayload {
   sub: string;
   email: string;
-  role: 'ADMIN' | 'ASSET_MANAGER' | 'EMPLOYEE';
+  role: 'ADMIN' | 'MANAGER' | 'EMPLOYEE';
   isSystemAdmin?: boolean;
 }
 
 @Injectable()
 export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
   constructor(configService: ConfigService) {
+    const fromRefreshCookie = (req: any) => req?.cookies?.refresh_token || null;
+
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: ExtractJwt.fromExtractors([
+        ExtractJwt.fromAuthHeaderAsBearerToken(),
+        fromRefreshCookie,
+      ]),
       passReqToCallback: true,
       ignoreExpiration: false,
       secretOrKey: configService.get<string>('JWT_REFRESH_SECRET'),
@@ -23,7 +28,8 @@ export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh'
 
   async validate(req: any, payload: JwtPayload) {
     const authHeader: string = req.get('authorization') || '';
-    const refreshToken = authHeader.replace('Bearer', '').trim();
+    const bearer = authHeader.replace('Bearer', '').trim();
+    const refreshToken = req?.cookies?.refresh_token || bearer;
 
     return {
       id: payload.sub,
