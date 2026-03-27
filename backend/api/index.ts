@@ -1,4 +1,6 @@
 import 'dotenv/config';
+import 'class-validator';
+import 'class-transformer';
 import { NestFactory } from '@nestjs/core';
 import { ExpressAdapter } from '@nestjs/platform-express';
 import { ValidationPipe } from '@nestjs/common';
