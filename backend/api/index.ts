@@ -1,6 +1,6 @@
 import 'dotenv/config';
-import 'class-validator';
-import 'class-transformer';
+import * as classValidator from 'class-validator';
+import * as classTransformer from 'class-transformer';
 import { NestFactory } from '@nestjs/core';
 import { ExpressAdapter } from '@nestjs/platform-express';
 import { ValidationPipe } from '@nestjs/common';
@@ -33,6 +33,8 @@ async function bootstrap() {
       whitelist: true,
       forbidNonWhitelisted: true,
       transform: true,
+      validatorPackage: classValidator,
+      transformerPackage: classTransformer,
     }),
   );
 
