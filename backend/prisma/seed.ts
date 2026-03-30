@@ -12,19 +12,23 @@ const prisma = new PrismaClient()
 
 function toDateOnly(input: Date) {
   const d = new Date(input)
-  d.setHours(0, 0, 0, 0)
+  d.setUTCHours(0, 0, 0, 0)
   return d
 }
 
 function setTime(baseDate: Date, hhmm: string, minuteOffset = 0) {
   const [hour, minute] = hhmm.split(':').map(Number)
   const d = new Date(baseDate)
-  d.setHours(hour, minute + minuteOffset, 0, 0)
+  d.setUTCHours(hour, minute + minuteOffset, 0, 0)
   return d
 }
 
 async function main() {
-  console.log('--- Worktime seeding started (SSO-aligned users) ---')
+  const now = new Date()
+  const today = toDateOnly(now)
+  const day = 24 * 60 * 60 * 1000
+
+  console.log('--- Worktime seeding started (Comprehensive Corporate Data) ---')
 
   await prisma.notification.deleteMany()
   await prisma.auditLog.deleteMany()
@@ -45,332 +49,161 @@ async function main() {
     },
   })
 
-  const [officeSchedule, earlySchedule, flexSchedule, nightSchedule] = await Promise.all([
-    prisma.schedule.create({
-      data: {
-        name: 'Office Shift (09:00 - 18:00)',
-        type: ScheduleType.FIXED,
-        startTime: '09:00',
-        endTime: '18:00',
-        gracePeriodMinutes: 15,
-      },
-    }),
-    prisma.schedule.create({
-      data: {
-        name: 'Early Shift (07:00 - 16:00)',
-        type: ScheduleType.FIXED,
-        startTime: '07:00',
-        endTime: '16:00',
-        gracePeriodMinutes: 10,
-      },
-    }),
-    prisma.schedule.create({
-      data: {
-        name: 'Flexi Shift',
-        type: ScheduleType.FLEXI,
-        minHours: 8,
-      },
-    }),
-    prisma.schedule.create({
-      data: {
-        name: 'Night Shift (22:00 - 06:00)',
-        type: ScheduleType.SHIFT,
-        startTime: '22:00',
-        endTime: '06:00',
-        gracePeriodMinutes: 10,
-      },
-    }),
-  ])
+  // Schedulers
+  const officeSchedule = await prisma.schedule.create({ data: { name: 'Standard Office (09:00 - 18:00)', type: ScheduleType.FIXED, startTime: '09:00', endTime: '18:00' } })
+  const earlySchedule = await prisma.schedule.create({ data: { name: 'Morning Shift (07:00 - 16:00)', type: ScheduleType.FIXED, startTime: '07:00', endTime: '16:00' } })
+  const flexSchedule = await prisma.schedule.create({ data: { name: 'Dev Flexi Time', type: ScheduleType.FLEXI, minHours: 8 } })
+  const nightSchedule = await prisma.schedule.create({ data: { name: 'Data Center Night (22:00 - 06:00)', type: ScheduleType.SHIFT, startTime: '22:00', endTime: '06:00' } })
 
-  // SSO user identity must match Portal Hub and Asset-Space.
-  const [alex, marcus, sarah, david, linda] = await Promise.all([
-    prisma.user.create({
-      data: {
-        name: 'Alex Rivera',
-        email: 'alex@testmail.com',
-        password: passwordHash,
-        role: UserRole.ADMIN,
-        isSystemAdmin: true,
-        department: 'Technology',
-      },
-    }),
-    prisma.user.create({
-      data: {
-        name: 'Marcus Thorne',
-        email: 'marcus@testmail.com',
-        password: passwordHash,
-        role: UserRole.ADMIN,
-        department: 'Operations',
-      },
-    }),
-    prisma.user.create({
-      data: {
-        name: 'Sarah Jenkins',
-        email: 'sarah@testmail.com',
-        password: passwordHash,
-        role: UserRole.MANAGER,
-        department: 'Operations',
-      },
-    }),
-    prisma.user.create({
-      data: {
-        name: 'David Chen',
-        email: 'david@testmail.com',
-        password: passwordHash,
-        role: UserRole.EMPLOYEE,
-        department: 'Engineering',
-      },
-    }),
-    prisma.user.create({
-      data: {
-        name: 'Linda Wu',
-        email: 'linda@testmail.com',
-        password: passwordHash,
-        role: UserRole.EMPLOYEE,
-        department: 'Design',
-      },
-    }),
-  ])
+  // 15 Users
+  const userSeeds = [
+    { name: 'Alex Rivera', email: 'alex@testmail.com', role: UserRole.ADMIN, isSystemAdmin: true, dept: 'Technology' },
+    { name: 'Marcus Thorne', email: 'marcus@testmail.com', role: UserRole.ADMIN, dept: 'Operations' },
+    { name: 'Sarah Jenkins', email: 'sarah@testmail.com', role: UserRole.MANAGER, dept: 'Operations' },
+    { name: 'David Chen', email: 'david@testmail.com', role: UserRole.EMPLOYEE, dept: 'Engineering' },
+    { name: 'Linda Wu', email: 'linda@testmail.com', role: UserRole.EMPLOYEE, dept: 'Design' },
+    { name: 'Elena Rodriguez', email: 'elena@testmail.com', role: UserRole.MANAGER, dept: 'Engineering' },
+    { name: 'Julian Vane', email: 'julian@testmail.com', role: UserRole.EMPLOYEE, dept: 'Engineering' },
+    { name: 'Sophia Loren', email: 'sophia@testmail.com', role: UserRole.EMPLOYEE, dept: 'Engineering' },
+    { name: 'Viktor Krum', email: 'viktor@testmail.com', role: UserRole.EMPLOYEE, dept: 'Technology' },
+    { name: 'Nadia Petrova', email: 'nadia@testmail.com', role: UserRole.EMPLOYEE, dept: 'Operations' },
+    { name: 'Omar Sy', email: 'omar@testmail.com', role: UserRole.ADMIN, dept: 'Technology' },
+    { name: 'Xavier Woods', email: 'xavier@testmail.com', role: UserRole.EMPLOYEE, dept: 'Technology' },
+    { name: 'Yara Grey', email: 'yara@testmail.com', role: UserRole.EMPLOYEE, dept: 'Operations' },
+    { name: 'Zane Smith', email: 'zane@testmail.com', role: UserRole.EMPLOYEE, dept: 'Sales' },
+    { name: 'Fiona Gallagher', email: 'fiona@testmail.com', role: UserRole.EMPLOYEE, dept: 'Operations' },
+  ]
 
+  const users = await Promise.all(userSeeds.map(u => 
+    prisma.user.create({ data: { ...u, password: passwordHash, department: u.dept } })
+  ))
+  
+  const [alex, marcus, sarah, david, linda, elena, julian, sophia, viktor, nadia, omar, xavier, yara, zane, fiona] = users
+  
   const sixMonthsAgo = new Date()
   sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6)
 
-  await Promise.all([
-    prisma.scheduleAssignment.create({
-      data: {
-        userId: alex.id,
-        scheduleId: officeSchedule.id,
-        effectiveFrom: sixMonthsAgo,
-      },
-    }),
-    prisma.scheduleAssignment.create({
-      data: {
-        userId: marcus.id,
-        scheduleId: earlySchedule.id,
-        effectiveFrom: sixMonthsAgo,
-      },
-    }),
-    prisma.scheduleAssignment.create({
-      data: {
-        userId: sarah.id,
-        scheduleId: officeSchedule.id,
-        effectiveFrom: sixMonthsAgo,
-      },
-    }),
-    prisma.scheduleAssignment.create({
-      data: {
-        userId: david.id,
-        scheduleId: flexSchedule.id,
-        effectiveFrom: sixMonthsAgo,
-      },
-    }),
-    prisma.scheduleAssignment.create({
-      data: {
-        userId: linda.id,
-        scheduleId: officeSchedule.id,
-        effectiveFrom: sixMonthsAgo,
-      },
-    }),
-  ])
+  // Map users to schedules
+  const userToSched = [
+    { u: alex, s: officeSchedule }, { u: marcus, s: earlySchedule },
+    { u: sarah, s: officeSchedule }, { u: david, s: flexSchedule },
+    { u: linda, s: officeSchedule }, { u: elena, s: earlySchedule },
+    { u: julian, s: nightSchedule }, { u: sophia, s: officeSchedule },
+    { u: viktor, s: flexSchedule }, { u: nadia, s: earlySchedule },
+    { u: omar, s: officeSchedule }, { u: xavier, s: nightSchedule },
+    { u: yara, s: officeSchedule }, { u: zane, s: flexSchedule },
+    { u: fiona, s: earlySchedule },
+  ]
 
-  const users = [alex, marcus, sarah, david, linda]
-  const userScheduleMap = new Map<string, { scheduleId: string; start?: string; end?: string; type: ScheduleType; minHours?: number }>([
-    [alex.id, { scheduleId: officeSchedule.id, start: '09:00', end: '18:00', type: ScheduleType.FIXED }],
-    [marcus.id, { scheduleId: earlySchedule.id, start: '07:00', end: '16:00', type: ScheduleType.FIXED }],
-    [sarah.id, { scheduleId: officeSchedule.id, start: '09:00', end: '18:00', type: ScheduleType.FIXED }],
-    [david.id, { scheduleId: flexSchedule.id, type: ScheduleType.FLEXI, minHours: 8 }],
-    [linda.id, { scheduleId: officeSchedule.id, start: '09:00', end: '18:00', type: ScheduleType.FIXED }],
-  ])
+  for (const item of userToSched) {
+    await prisma.scheduleAssignment.create({ data: { userId: item.u.id, scheduleId: item.s.id, effectiveFrom: sixMonthsAgo } })
+  }
 
-  const attendanceRows: Array<{
-    userId: string
-    scheduleId: string
-    date: Date
-    checkIn: Date | null
-    checkOut: Date | null
-    status: AttendanceStatus
-    durationMinutes: number | null
-    notes: string | null
-  }> = []
+  // Attendance Generation (Past 14 days + TODAY)
+  console.log('Generating attendance records...')
+  for (let i = 0; i <= 14; i++) { // Include i=0 for TODAY
+    const date = toDateOnly(new Date(Date.now() - i * day))
+    if (date.getUTCDay() === 0 || date.getUTCDay() === 6) continue
 
-  for (let i = 1; i <= 21; i++) {
-    const date = toDateOnly(new Date(Date.now() - i * 24 * 60 * 60 * 1000))
-    const day = date.getDay()
-    if (day === 0 || day === 6) continue
-
-    for (const user of users) {
-      const setup = userScheduleMap.get(user.id)
-      if (!setup) continue
-
+    for (const item of userToSched) {
+      const isToday = i === 0
+      
+      // For today, some people haven't checked out yet, or are late
       let checkIn: Date | null = null
       let checkOut: Date | null = null
       let status: AttendanceStatus = AttendanceStatus.ON_TIME
-      let notes: string | null = null
 
-      if (setup.type === ScheduleType.FLEXI) {
-        const startOffset = i % 3 === 0 ? 20 : -10
-        checkIn = setTime(date, '09:30', startOffset)
-        const hours = i % 5 === 0 ? 7.5 : 8.7
-        checkOut = new Date(checkIn)
-        checkOut.setMinutes(checkOut.getMinutes() + Math.floor(hours * 60))
-        status = hours >= (setup.minHours || 8) ? AttendanceStatus.ON_TIME : AttendanceStatus.EARLY_LEAVE
-        if (status === AttendanceStatus.EARLY_LEAVE) notes = 'Left early for personal appointment'
-      } else {
-        const start = setup.start || '09:00'
-        const end = setup.end || '18:00'
-        const lateOffset = i % 7 === 0 && user.id === linda.id ? 22 : i % 6 === 0 && user.id === david.id ? 18 : -5
-        const earlyOutOffset = i % 8 === 0 && user.id === marcus.id ? -25 : 15
-
-        checkIn = setTime(date, start, lateOffset)
-        checkOut = setTime(date, end, earlyOutOffset)
-
-        if (lateOffset > 15) {
-          status = AttendanceStatus.LATE
-          notes = 'Traffic delay'
+      if (isToday) {
+        // Today's scenario: 10 people checked in, 5 not yet
+        const userIndex = users.indexOf(item.u)
+        if (userIndex < 10) {
+          const isLate = userIndex >= 7 // Alex, Marcus, Sarah, David are on time. Sophia, Viktor, Nadia are late.
+          const start = item.s.startTime || '09:00'
+          checkIn = setTime(date, start, isLate ? 35 : -10)
+          status = isLate ? AttendanceStatus.LATE : AttendanceStatus.ON_TIME
+          // No checkout yet for today
+          checkOut = null
+        } else if (userIndex >= 12) {
+          // Some are "On Leave" or "Absent" today
+          status = userIndex === 14 ? AttendanceStatus.ABSENT : AttendanceStatus.ON_TIME
+          checkIn = null
+          checkOut = null
+          if (userIndex === 14) status = AttendanceStatus.ABSENT
+        } else {
+            // Checked in and already checked out (Early Leave)
+            checkIn = setTime(date, item.s.startTime || '09:00', -5)
+            checkOut = setTime(date, '13:00', 0)
+            status = AttendanceStatus.EARLY_LEAVE
         }
-        if (earlyOutOffset < 0) {
-          status = status === AttendanceStatus.LATE ? AttendanceStatus.LATE : AttendanceStatus.EARLY_LEAVE
-          if (!notes) notes = 'Left early for operational visit'
+      } else {
+        // Past days scenario
+        const isLate = Math.random() > 0.8
+        const isEarlyLeave = Math.random() > 0.9
+        
+        if (item.s.type === ScheduleType.FLEXI) {
+          checkIn = setTime(date, '09:30', Math.floor(Math.random() * 40 - 20))
+          checkOut = new Date(checkIn.getTime() + (8 * 60 + Math.floor(Math.random() * 60)) * 60000)
+        } else {
+          const start = item.s.startTime || '09:00'
+          const end = item.s.endTime || '18:00'
+          checkIn = setTime(date, start, isLate ? 25 : -5)
+          checkOut = setTime(date, end, isEarlyLeave ? -30 : 10)
+          
+          if (isLate) status = AttendanceStatus.LATE
+          else if (isEarlyLeave) status = AttendanceStatus.EARLY_LEAVE
         }
       }
 
-      attendanceRows.push({
-        userId: user.id,
-        scheduleId: setup.scheduleId,
-        date,
-        checkIn,
-        checkOut,
-        status,
-        durationMinutes: checkIn && checkOut ? Math.floor((checkOut.getTime() - checkIn.getTime()) / 60000) : null,
-        notes,
-      })
+      await prisma.attendance.create({
+        data: {
+          userId: item.u.id,
+          scheduleId: item.s.id,
+          date,
+          checkIn,
+          checkOut,
+          status,
+          durationMinutes: checkIn && checkOut ? Math.floor((checkOut.getTime() - checkIn.getTime()) / 60000) : null,
+          notes: status === AttendanceStatus.LATE ? 'Heavy traffic' : status === AttendanceStatus.EARLY_LEAVE ? 'Personal emergency' : null
+        }
+      }).catch(() => {})
     }
   }
 
-  // Add one explicit absent record.
-  attendanceRows.push({
-    userId: david.id,
-    scheduleId: flexSchedule.id,
-    date: toDateOnly(new Date(Date.now() - 9 * 24 * 60 * 60 * 1000)),
-    checkIn: null,
-    checkOut: null,
-    status: AttendanceStatus.ABSENT,
-    durationMinutes: null,
-    notes: 'Sick leave',
+  // Corporate Requests (Leave, Shift Swaps)
+  await prisma.request.createMany({
+    data: [
+      { requesterId: david.id, approverId: elena.id, type: RequestType.CHANGE, status: RequestStatus.PENDING, reason: 'Requesting WFH for internet repair', targetDate: new Date(now.getTime() + 2 * day) },
+      { requesterId: julian.id, approverId: sarah.id, type: RequestType.SWAP, status: RequestStatus.APPROVED, reason: 'Family emergency, swapping night shift', targetUserId: xavier.id, targetDate: new Date(now.getTime() + 1 * day) },
+      { requesterId: linda.id, approverId: sarah.id, type: RequestType.CHANGE, status: RequestStatus.REJECTED, reason: 'Full day leave on release day', targetDate: new Date(now.getTime() + 3 * day) },
+      { requesterId: sophia.id, approverId: elena.id, type: RequestType.CHANGE, status: RequestStatus.PENDING, reason: 'Half day leave for dental appointment', targetDate: today },
+    ]
   })
 
-  // Attendance has a unique constraint on (userId, date), so collapse duplicates first.
-  const attendanceByUserDate = new Map<string, (typeof attendanceRows)[number]>()
-  for (const row of attendanceRows) {
-    attendanceByUserDate.set(`${row.userId}-${row.date.toISOString()}`, row)
-  }
-
-  await prisma.attendance.createMany({
-    data: Array.from(attendanceByUserDate.values()),
-    skipDuplicates: true,
+  // Notifications & Audit
+  await prisma.notification.createMany({
+    data: users.map((u, i) => ({
+      userId: u.id,
+      title: i % 2 === 0 ? 'Schedule Updated' : 'Policy Reminder',
+      message: i % 2 === 0 ? 'Your schedule for next week has been published.' : 'Please remember the 15-minute grace period policy.',
+      type: i % 3 === 0 ? 'WARNING' : 'INFO'
+    }))
   })
-
-  await Promise.all([
-    prisma.request.create({
-      data: {
-        type: RequestType.CHANGE,
-        status: RequestStatus.PENDING,
-        requesterId: david.id,
-        approverId: sarah.id,
-        targetDate: toDateOnly(new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)),
-        reason: 'Need late start for medical check-up',
-      },
-    }),
-    prisma.request.create({
-      data: {
-        type: RequestType.SWAP,
-        status: RequestStatus.APPROVED,
-        requesterId: linda.id,
-        approverId: sarah.id,
-        targetUserId: david.id,
-        targetDate: toDateOnly(new Date(Date.now() + 5 * 24 * 60 * 60 * 1000)),
-        reason: 'Swap shift due to client workshop',
-      },
-    }),
-    prisma.request.create({
-      data: {
-        type: RequestType.CHANGE,
-        status: RequestStatus.REJECTED,
-        requesterId: david.id,
-        approverId: marcus.id,
-        targetDate: toDateOnly(new Date(Date.now() + 2 * 24 * 60 * 60 * 1000)),
-        reason: 'Requested full-day remote without notice',
-      },
-    }),
-  ])
-
-  await Promise.all([
-    prisma.notification.create({
-      data: {
-        userId: alex.id,
-        title: 'System Initialized',
-        message: 'Worktime baseline data has been synchronized with Unified SSO users.',
-        type: 'INFO',
-      },
-    }),
-    prisma.notification.create({
-      data: {
-        userId: sarah.id,
-        title: 'Pending Request',
-        message: 'David submitted a schedule change request requiring approval.',
-        type: 'WARNING',
-      },
-    }),
-    prisma.notification.create({
-      data: {
-        userId: david.id,
-        title: 'Request Update',
-        message: 'One of your schedule requests has been rejected by Operations Admin.',
-        type: 'DANGER',
-      },
-    }),
-  ])
 
   await prisma.auditLog.createMany({
     data: [
-      {
-        userId: alex.id,
-        action: 'SEED_BOOTSTRAP',
-        entity: 'SystemConfig',
-        entityId: 'global',
-        newData: { gracePeriodMinutes: 15, noShowThresholdMins: 60 },
-      },
-      {
-        userId: sarah.id,
-        action: 'SCHEDULE_ASSIGNMENT_CREATED',
-        entity: 'ScheduleAssignment',
-        entityId: 'seed-assignment-sarah',
-        newData: { user: 'sarah@testmail.com', schedule: officeSchedule.name },
-      },
-      {
-        userId: marcus.id,
-        action: 'ATTENDANCE_DATA_GENERATED',
-        entity: 'Attendance',
-        entityId: 'seed-attendance-batch-2026',
-        newData: { days: 21, users: 5 },
-      },
-    ],
+      { userId: alex.id, action: 'CONFIG_UPDATE', entity: 'SystemConfig', entityId: 'global', newData: { gracePeriod: 15 } },
+      { userId: sarah.id, action: 'BULK_ATTENDANCE_IMPORT', entity: 'Attendance', entityId: 'BATCH-001', newData: { count: 154 } },
+      { userId: marcus.id, action: 'SCHEDULE_CREATED', entity: 'Schedule', entityId: nightSchedule.id, newData: { name: nightSchedule.name } }
+    ]
   })
 
-  console.log('--- Worktime seeding completed ---')
-  console.log('Users seeded (password: password123):')
-  console.log('- alex@testmail.com (ADMIN, isSystemAdmin=true)')
-  console.log('- marcus@testmail.com (ADMIN)')
-  console.log('- sarah@testmail.com (MANAGER)')
-  console.log('- david@testmail.com (EMPLOYEE)')
-  console.log('- linda@testmail.com (EMPLOYEE)')
+  console.log('--- Worktime seeding completed successfully ---')
 }
 
 main()
-  .catch((e) => {
+  .then(async () => { await prisma.$disconnect() })
+  .catch(async (e) => {
     console.error(e)
-    process.exit(1)
-  })
-  .finally(async () => {
     await prisma.$disconnect()
+    process.exit(1)
   })
