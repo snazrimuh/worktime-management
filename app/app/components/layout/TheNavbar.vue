@@ -98,9 +98,9 @@ const handleClickOutside = (event: MouseEvent) => {
   }
 }
 
-const handleBackToPortal = async () => {
+const handleBackToPortal = () => {
   isProfileMenuOpen.value = false
-  await navigateTo(runtime.public.hubUrl, { external: true })
+  window.location.href = runtime.public.hubUrl ? `${runtime.public.hubUrl}/dashboard` : '/dashboard'
 }
 
 onMounted(() => {
